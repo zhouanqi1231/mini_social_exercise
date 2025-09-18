@@ -3,8 +3,7 @@
 This is a mock social media platform created for the Social Computing course at the University of Oulu by Dr. Aku Visuri and Daniel Szabo.
 
 
-The codebase contains two missing implementations: the moderation and the recommendation algorithm.
-
+The codebase contains three missing implementations, which you find [at end of app.py](https://github.com/Crowd-Computing-Oulu/mini_social_exercise/blob/44117e36e609b52c3452226797a0fd3fb5ff5258/app.py#L886).
 ## Usage
 
 1. Clone this repository onto your computer
