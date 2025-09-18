@@ -2,8 +2,10 @@
 
 This is a mock social media platform created for the Social Computing course at the University of Oulu by Dr. Aku Visuri and Daniel Szabo.
 
-
 The codebase contains three missing implementations, which you find [at end of app.py](https://github.com/Crowd-Computing-Oulu/mini_social_exercise/blob/44117e36e609b52c3452226797a0fd3fb5ff5258/app.py#L886).
+
+The repository contains a ready database, you do not have to create your own data.
+
 ## Usage
 
 1. Clone this repository onto your computer
@@ -12,6 +14,7 @@ The codebase contains three missing implementations, which you find [at end of a
 4. Start the server by running `pyhon ./app.py`
 5. The web application will be available at http://127.0.0.1:8080. 
 6. The admin interface is at http://127.0.0.1:8080/admin, available only to the Admin user (username: admin, pw: admin)
+
 
 ### Docker
 
