@@ -19,4 +19,12 @@ The codebase contains two missing implementations: the moderation and the recomm
 If you prefer to run Mini-Social as a docker container, you can build the image and run it as follows:
 
 1. Build image with `docker build --tag mini-social .`
-2. Run image with `docker run -d -p 8000:5000 mini-social` where 8000 is the port you will access the application at `http://127.0.0.1:8000`
+2. Run image with the following command, where 8000 is the port you will access the application at `http://127.0.0.1:8000`
+
+```
+docker run -d -p 8000:5000 \
+    --restart always \
+    -v $(pwd)/database.sqlite:/python-docker/database.sqlite \
+    mini-social
+```
+ 

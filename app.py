@@ -27,7 +27,6 @@ TIER1_WORDS = MODERATION_CONFIG['categories']['tier1_severe_violations']['words'
 TIER2_PHRASES = MODERATION_CONFIG['categories']['tier2_spam_scams']['phrases']
 TIER3_WORDS = MODERATION_CONFIG['categories']['tier3_mild_profanity']['words']
 
-
 def get_db():
     """
     Connect to the application's configured database. The connection
@@ -76,11 +75,7 @@ def query_db(query, args=(), one=False, commit=False):
         return cur
 
     except sqlite3.Error as e:
-        # It's good practice to log the error.
         print(f"Database error: {e}")
-        # Depending on your app's needs, you might want to raise the exception
-        # or return None to indicate failure.
-        # raise e 
         return None
 
 @app.template_filter('datetimeformat')
@@ -237,8 +232,6 @@ def add_post():
     return redirect(url_for('feed'))
     
     
-# Add this new route to your app.py file
-
 @app.route('/posts/<int:post_id>/delete', methods=['POST'])
 def delete_post(post_id):
     """Handles deleting a post."""
@@ -511,7 +504,6 @@ def add_comment(post_id):
 
     # Redirect back to the page the user came from (likely the post detail page)
     return redirect(request.referrer or url_for('post_detail', post_id=post_id))
-# Add this new route to your app.py file, for example, after the delete_post route.
 
 @app.route('/comments/<int:comment_id>/delete', methods=['POST'])
 def delete_comment(comment_id):
@@ -619,8 +611,6 @@ def unreact():
     return redirect(request.referrer or url_for('feed'))
 
 
-# Add these two new routes to your app.py file
-
 @app.route('/u/<int:user_id>/follow', methods=['POST'])
 def follow_user(user_id):
     """Handles the logic for the current user to follow another user."""
@@ -651,10 +641,8 @@ def follow_user(user_id):
         username_to_follow = query_db('SELECT username FROM users WHERE id = ?', (user_id,), one=True)['username']
         flash(f"You are now following {username_to_follow}.", "success")
     except sqlite3.IntegrityError:
-        # This error occurs if the relationship already exists (due to a PRIMARY KEY)
         flash("You are already following this user.", "info")
 
-    # Redirect back to the page the user came from (e.g., the profile page)
     return redirect(request.referrer or url_for('feed'))
 
 
@@ -688,11 +676,9 @@ def unfollow_user(user_id):
 def admin_dashboard():
     """Displays the admin dashboard with users, posts, and comments, sorted by risk."""
 
-    #  Hardcoded Admin Check 
     if session.get('username') != 'admin':
         flash("You do not have permission to access this page.", "danger")
         return redirect(url_for('feed'))
-    
 
     RISK_LEVELS = { "HIGH": 5, "MEDIUM": 3, "LOW": 1 }
     PAGE_SIZE = 50
@@ -718,7 +704,6 @@ def admin_dashboard():
     
     current_tab = request.args.get('tab', 'users') # Default to 'users' tab
 
-    # --- Users Tab Data ---
     users_offset = (users_page - 1) * PAGE_SIZE
     
     # First, get all users to calculate risk, then apply pagination in Python
@@ -834,7 +819,6 @@ def admin_delete_user(user_id):
         return redirect(url_for('admin_dashboard'))
     
     db = get_db()
-    # Note: Ensure your database uses 'ON DELETE CASCADE' for this to be clean.
     db.execute('DELETE FROM users WHERE id = ?', (user_id,))
     db.commit()
     flash(f'User {user_id} and all their content has been deleted.', 'success')
@@ -895,7 +879,7 @@ def recommend(user_id, filter_following):
     Returns:
         A list of 5 recommended posts, in reverse-chronological order.
 
-    To test whether your recommendation algorithm works, let's pretend we like the DIY topic.Here are some users that often post DIY comment and a few example posts. Make sure your account did not engage with anything else. You should test your algorithm with these and see if your recommendation algorithm picks up on your interest in DIY and starts showing related content.
+    To test whether your recommendation algorithm works, let's pretend we like the DIY topic. Here are some users that often post DIY comment and a few example posts. Make sure your account did not engage with anything else. You should test your algorithm with these and see if your recommendation algorithm picks up on your interest in DIY and starts showing related content.
     
     Users: @starboy99, @DancingDolphin, @blogger_bob
     Posts: 1810, 1875, 1880, 2113
@@ -910,7 +894,7 @@ def recommend(user_id, filter_following):
 
     return recommended_posts;
 
-# Task 3.1
+# Task 3.2
 def user_risk_analysis(user_id):
     """
     Args:
