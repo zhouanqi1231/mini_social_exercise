@@ -921,8 +921,16 @@ def moderate_content(content):
     Then, navigate to the /admin endpoint. (http://localhost:8080/admin)
     """
 
-    moderated_content = content
-    score = 0
+    moderated_content = ""
+    score = 0.0
+
+    content_word_list = content.split()
+    for word in content_word_list:
+        if word.lower() in TIER3_WORDS:
+            word_len = len(word)
+            word = "*" * word_len
+            score = score + 2
+        moderated_content = moderated_content + " " + word
 
     return moderated_content, score
 
