@@ -938,16 +938,48 @@ def moderate_content(content):
     Then, navigate to the /admin endpoint. (http://localhost:8080/admin)
     """
 
+    # severe ########################################################
+    # tier1 word ---------------------------------------------------------
+    TIER1_PATTERN = r"\b(" + "|".join(TIER1_WORDS) + r")\b"  # a regex pattern that matches whole word in tier 1 list
+    matches = re.findall(TIER1_PATTERN, content, flags=re.IGNORECASE)  # find all the matching words
+    if len(matches) > 0:
+        return "[content removed due to severe violation]", 5.0
+
+    # tier2 phrase ---------------------------------------------------------
+    TIER2_PATTERN = r"(" + "|".join(TIER2_PHRASES) + r")"  # a regex pattern that matches phrases in tier 2 list
+    matches = re.findall(TIER2_PATTERN, content, flags=re.IGNORECASE)  # find all the matching phrases
+    if len(matches) > 0:
+        return "[content removed due to spam/scam policy]", 5.0
+
+    # scored violations & filtering ########################################################
     moderated_content = ""
     score = 0.0
 
-    content_word_list = content.split()
-    for word in content_word_list:
-        if word.lower() in TIER3_WORDS:
-            word_len = len(word)
-            word = "*" * word_len
-            score = score + 2
-        moderated_content = moderated_content + " " + word
+    # tier 3 word ---------------------------------------------------------
+    TIER3_PATTERN = r"\b(" + "|".join(TIER3_WORDS) + r")\b"  # a regex pattern that matches whole word in tier 3 list
+    matches = re.findall(TIER3_PATTERN, content, flags=re.IGNORECASE)  # find all the matching words
+    score += len(matches) * 2
+    moderated_content = re.sub(TIER3_PATTERN, lambda m: "*" * len(m.group(0)), content, flags=re.IGNORECASE)  # replace all words with *
+
+    # external links ---------------------------------------------------------
+    # original regex string comes from https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
+    # https? or ftp urls can be detected.
+    # not including internal link, have to use 'localhost' cause I don't actually have a domain name
+    domain_name = "localhost"
+    domain_escaped = re.escape(domain_name)  # domain name often look like 'example.com'
+
+    # when using 'rf', every {} except those containing vars, need to be {{}}
+    EX_LINK_PATTERN = rf"(?:https?|ftp):\/\/(?!(?:www\.)?{domain_escaped}\b)(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{{1,256}}(?:\.[a-zA-Z0-9()]{{1,6}}\b|\:\d{{1,5}})(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+    matches = re.findall(EX_LINK_PATTERN, moderated_content, flags=re.IGNORECASE)  # find all the matching urls
+    score += len(matches) * 2
+    moderated_content = re.sub(EX_LINK_PATTERN, "[link removed]", moderated_content, flags=re.IGNORECASE)  # replace all urls
+
+    # excessive capitalization ---------------------------------------------------------
+    total_letter_count = len(re.findall(r"[a-zA-Z]", content))  # total
+    if total_letter_count > 15:
+        uppercase_letter_count = len(re.findall(r"[A-Z]", content))  # upper
+        if uppercase_letter_count / total_letter_count > 0.7:
+            score += 0.5
 
     return moderated_content, score
 
