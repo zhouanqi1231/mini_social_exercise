@@ -902,22 +902,59 @@ def user_risk_analysis(user_id):
 
     score = 0.0
 
+    # user profile
+    user = query_db("SELECT profile, created_at FROM users WHERE id = ?", (user_id,))
+    user_profile = user[0]["profile"]
+    user_created_at = user[0]["created_at"]
+    _, profile_score = moderate_content(user_profile)
+
+    # posts
     posts = query_db("SELECT * FROM posts WHERE user_id = ?", (user_id,))
 
-    for post in posts:
-        content = post["content"]
-        _, content_score = moderate_content(content)
+    average_post_score = 0
+    if posts:  # if not, this value is 0
+        for post in posts:
+            _, content_score = moderate_content(post["content"])
+            average_post_score += content_score
+        average_post_score /= len(posts)
 
-        score = score + content_score
+    # comments
+    comments = query_db("SELECT * FROM comments WHERE user_id = ?", (user_id,))
 
-        # if content_score != 0:
-        #     score = score + 1
+    average_comment_score = 0
+    if comments:  # if not, this value is 0
+        for comment in comments:
+            _, content_score = moderate_content(comment["content"])
+            average_comment_score += content_score
+        average_comment_score /= len(comments)
 
-    # Think of two ways you could make this risk analysis function more accurate.
-    # 1. add the comment moderation result
-    # 2. use the average risk score for all their posts
+    # formula
+    content_risk_score = (profile_score * 1) + (average_post_score * 3) + (average_comment_score * 1)
 
-    return score
+    # repeated content
+    contents_2_counts = query_db(
+        "SELECT content, COUNT(*) as content_count\
+        FROM posts\
+        WHERE user_id = ?\
+        GROUP BY content\
+        ORDER BY content_count DESC",
+        (user_id,),
+    )
+
+    if contents_2_counts:
+        if contents_2_counts[0]["content_count"] >= 3:
+            content_risk_score += 2.0
+
+    # account age
+    user_risk_score = content_risk_score
+    user_age_days = (datetime.utcnow() - user_created_at).days
+    if user_age_days < 7:
+        user_risk_score *= 1.5
+    elif user_age_days < 30:
+        user_risk_score *= 1.2
+
+    # return user_risk_score
+    return min(user_risk_score, 5.0)
 
 
 # Task 3.3
@@ -937,6 +974,8 @@ def moderate_content(content):
             password: admin
     Then, navigate to the /admin endpoint. (http://localhost:8080/admin)
     """
+    if content == None:
+        return None, 0.0
 
     # severe ########################################################
     # tier1 word ---------------------------------------------------------
@@ -992,7 +1031,6 @@ def moderate_content(content):
 
     if total_character_count > 15:
         special_character_ratio = special_character_count / total_character_count
-        print(special_character_ratio)
         if special_character_ratio > 0.5:
             score += 2
 
