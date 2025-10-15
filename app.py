@@ -981,6 +981,21 @@ def moderate_content(content):
         if uppercase_letter_count / total_letter_count > 0.7:
             score += 0.5
 
+    # one more ########################################################
+    # detect special character ratio
+    SPECIAL_CHARACTER_PATTERN = r'[^a-zA-Z0-9,.?!:;\'" -]'
+    matches = re.findall(SPECIAL_CHARACTER_PATTERN, content)
+    special_character_count = len(matches)
+
+    NON_SPACE_PATTERN = r"\S"
+    total_character_count = len(re.findall(NON_SPACE_PATTERN, moderated_content))  # length of characters, except " "
+
+    if total_character_count > 15:
+        special_character_ratio = special_character_count / total_character_count
+        print(special_character_ratio)
+        if special_character_ratio > 0.5:
+            score += 2
+
     return moderated_content, score
 
 
