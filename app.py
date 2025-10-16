@@ -7,6 +7,16 @@ import sqlite3
 import hashlib
 import re
 from datetime import datetime
+import sqlite3
+import numpy as np
+from scipy.sparse import csr_matrix
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import CountVectorizer
+
+# from nltk.corpus import stopwords
+import pandas as pd
+import sqlite3
+from scipy.sparse import csr_matrix
 
 app = Flask(__name__)
 app.secret_key = "123456789"
@@ -867,7 +877,10 @@ def recommend(user_id, filter_following):
     Returns:
         A list of 5 recommended posts, in reverse-chronological order.
 
-    To test whether your recommendation algorithm works, let's pretend we like the DIY topic. Here are some users that often post DIY comment and a few example posts. Make sure your account did not engage with anything else. You should test your algorithm with these and see if your recommendation algorithm picks up on your interest in DIY and starts showing related content.
+    To test whether your recommendation algorithm works, let's pretend we like the DIY topic. Here are some users
+    that often post DIY comment and a few example posts. Make sure your account did not engage with anything else.
+    You should test your algorithm with these and see if your recommendation algorithm picks up on your interest in
+    DIY and starts showing related content.
 
     Users: @starboy99, @DancingDolphin, @blogger_bob
     Posts: 1810, 1875, 1880, 2113
@@ -877,8 +890,109 @@ def recommend(user_id, filter_following):
     - http://www.configworks.com/mz/handout_recsys_sac2010.pdf
     - https://www.researchgate.net/publication/227268858_Recommender_Systems_Handbook
     """
+    if filter_following:
+        return {}
 
-    recommended_posts = {}
+    # build a sparse matrix according to users' likes ################################
+    query = """
+    SELECT user_id, post_id, reaction_type
+    FROM reactions
+    WHERE reaction_type IN ('haha', 'like', 'wow', 'love');
+    """  # (user, post), ifLiked
+    users_2_liked_posts = query_db(query)
+
+    # appeared users and posts
+    users_set = {row[0] for row in users_2_liked_posts}
+    posts_set = {row[1] for row in users_2_liked_posts}
+    users_appeared = sorted(users_set)
+    posts_appeared = sorted(posts_set)
+
+    # for sparse matrix
+    user_to_index = {}  # user_id: (123,45,67)->(0,1)
+    post_to_index = {}
+    for idx, user_id in enumerate(users_appeared):
+        user_to_index[user_id] = idx
+    for idx, post_id in enumerate(posts_appeared):
+        post_to_index[post_id] = idx
+
+    # for sparse matrix
+    rows = []
+    cols = []
+    data = []
+
+    for user_2_liked_post in users_2_liked_posts:
+        user_index = user_to_index[user_2_liked_post[0]]
+        post_index = post_to_index[user_2_liked_post[1]]
+        rows.append(user_index)
+        cols.append(post_index)
+        data.append(1)  # value == 1 meaning 'liked'
+
+    user_like_post_matrix = csr_matrix((data, (rows, cols)), shape=(len(users_appeared), len(posts_appeared)))
+
+    # find people with similar interests OR followed by user ################################
+
+    # if current user never liked any posts, refer to followers only
+    top_similar_users_index = []
+    current_user_never_liked = False
+    if user_id not in user_to_index:
+        current_user_never_liked = True
+    else:
+        user_index = user_to_index[user_id]
+
+        # calculate similarity using cosine similarity, for all
+        similarity_matrix = cosine_similarity(user_like_post_matrix)
+        similarity_scores = similarity_matrix[user_index]
+
+        # top 10 most similar users, not including this user self
+        all_similar_index = similarity_scores.argsort()[-11:][::-1].tolist()  # desc, top11(including self)
+        for index in all_similar_index:
+            if index != user_index:
+                top_similar_users_index.append(index)
+            if len(top_similar_users_index) >= 10:
+                break
+
+    # followed users
+    followed_users = query_db("SELECT followed_id FROM follows WHERE follower_id = ?", (user_id,))
+    followed_user_id = [user["followed_id"] for user in followed_users]
+
+    # followed users -> matrix index, if they've liked something
+    followed_users_index = [user_to_index[i] for i in followed_user_id if i in user_to_index]
+    reference_users = list(set(top_similar_users_index) | set(followed_users_index))  # similar users + followed users, each have 1 vote
+
+    # find posts that were liked by those people while haven't been liked by this user ################################
+
+    liked_by_given_user = set()  # posts already liked by the given user
+    if not current_user_never_liked:
+        liked_by_given_user = user_like_post_matrix[user_index].nonzero()[1]
+
+    posts_2_likes = {post: 0 for post in posts_appeared}  # to find most liked posts by reference users
+
+    for user_index in reference_users:
+        # posts liked
+        liked_by_user = user_like_post_matrix[user_index].nonzero()[1]
+
+        for post_index in liked_by_user:
+            if post_index not in liked_by_given_user:
+                posts_2_likes[posts_appeared[post_index]] += 1
+
+    sorted_posts = sorted(posts_2_likes.items(), key=lambda x: x[1], reverse=True)  # sort the posts
+    recommended_post_id = [post for post, count in sorted_posts[:5]]  # top 5 posts
+
+    # structured result for returning
+    where_clause = "WHERE p.id IN ("
+    for id in recommended_post_id:
+        where_clause += str(id) + ","
+    where_clause = where_clause[:-1] + ")"  # delete comma
+
+    query = f"""
+        SELECT p.id, p.content, p.created_at, u.username, u.id as user_id
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        {where_clause}
+        ORDER BY p.created_at DESC
+    """
+    print(query)
+    recommended_posts = query_db(query)
 
     return recommended_posts
 
