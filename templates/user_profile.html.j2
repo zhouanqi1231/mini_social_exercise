@@ -17,19 +17,19 @@
           </p>
           <p class="card-text">{{ user.profile or "No profile information provided." }}</p>
 
-         {% if session.user_id and session.user_id != user.id %}
-            <div class="my-3">
-              {# The logic is now a simple boolean check #}
-              {% if is_following %}
-                <form action="{{ url_for('unfollow_user', user_id=user.id) }}" method="POST" class="d-inline">
-                  <button type="submit" class="btn btn-secondary">Unfollow</button>
-                </form>
-              {% else %}
-                <form action="{{ url_for('follow_user', user_id=user.id) }}" method="POST" class="d-inline">
-                  <button type="submit" class="btn btn-primary">Follow</button>
-                </form>
-              {% endif %}
-            </div>
+          {% if session.user_id and session.user_id != user.id %}
+          <div class="my-3">
+            {# The logic is now a simple boolean check #}
+            {% if is_following %}
+            <form action="{{ url_for('unfollow_user', user_id=user.id) }}" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-secondary">Unfollow</button>
+            </form>
+            {% else %}
+            <form action="{{ url_for('follow_user', user_id=user.id) }}" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-primary">Follow</button>
+            </form>
+            {% endif %}
+          </div>
           {% endif %}
 
           <div class="mt-4 d-flex">

@@ -12,17 +12,17 @@
   <div class="card shadow-sm">
     <div class="card-body">
       {% if users %}
-        <!-- List group for a clean, vertical list -->
-        <div >
-          {% for u in users %}
-            <a href="{{ url_for('user_profile', username=u.username) }}" class="mb-3">
-              {{ user_display(u.username) }} <br>
-            </a>
-          {% endfor %}
-        </div>
+      <!-- List group for a clean, vertical list -->
+      <div>
+        {% for u in users %}
+        <a href="{{ url_for('user_profile', username=u.username) }}" class="mb-3">
+          {{ user_display(u.username) }} <br>
+        </a>
+        {% endfor %}
+      </div>
       {% else %}
-        <!-- Message to show if there are no users to list -->
-        <p class="text-center text-muted mb-0">No {{ title|lower }} found.</p>
+      <!-- Message to show if there are no users to list -->
+      <p class="text-center text-muted mb-0">No {{ title|lower }} found.</p>
       {% endif %}
     </div>
   </div>
