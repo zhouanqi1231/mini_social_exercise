@@ -31,7 +31,7 @@ def main():
 
     # stopword
     stop_words = stopwords.words("english")
-    stop_words.extend(["would", "best", "always", "amazing", "bought", "quick" "people", "new", "fun", "think", "know", "believe", "many", "thing", "need", "small", "even", "make", "love", "mean", "fact", "question", "time", "reason", "also", "could", "true", "well", "life", "said", "year", "going", "good", "really", "much", "want", "back", "look", "article", "host", "university", "reply", "thanks", "mail", "post", "please"])
+    stop_words.extend(["would", "best", "always", "amazing", "bought", "quick" "people", "new", "fun", "think", "know", "believe", "many", "thing", "need", "small", "even", "make", "love", "mean", "fact", "question", "time", "reason", "also", "could", "true", "well", "life", "said", "year", "going", "good", "really", "much", "want", "back", "look", "article", "host", "university", "reply", "thanks", "mail", "post", "please", "like", "wait", "every", "day", "last", "might", "sometimes", "today", "anyone", "else", "get", "doe", "way", "another"])
 
     lemmatizer = WordNetLemmatizer()
 
@@ -70,11 +70,11 @@ def main():
     optimal_coherence = -100
     optimal_lda = None
     optimal_k = 0
-    for i in range(20, 60):
-        K = i
+    for i in range(120, 121):
+        K = 33
 
         # train model
-        lda = LdaModel(corpus, num_topics=K, id2word=dictionary, passes=10, random_state=2)  # , alpha=1 / 80, eta=1 / 80)
+        lda = LdaModel(corpus, num_topics=K, id2word=dictionary, passes=10, random_state=2)  # , alpha=1 / 80, eta=0.5)
 
         # evaluate the model using coherence score
         coherence_model = CoherenceModel(model=lda, texts=bow_list, dictionary=dictionary, coherence="c_v")
@@ -90,7 +90,7 @@ def main():
 
     # for every topic, top 5 most representative words per topic
     print(f"These are the words most representative of each of the {optimal_k} topics:")
-    for i, topic in optimal_lda.print_topics(num_words=10):
+    for i, topic in optimal_lda.print_topics(num_topics=optimal_k, num_words=10):
         print(f"Topic {i}: {topic}")
 
     # Then, let's determine how many posts we have for each topic
@@ -116,7 +116,7 @@ def main():
     for idx, value in top10:
         print(f"\nTopic {idx}: {value} posts")
 
-        for i, topic_words in optimal_lda.print_topics(num_words=10):
+        for i, topic_words in optimal_lda.print_topics(num_topics=optimal_k, num_words=10):
             if i == idx:
                 print(f"Top words: {topic_words}")
                 break
