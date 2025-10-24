@@ -19,10 +19,17 @@ def main():
     # get all the posts
     db = sqlite3.connect("database.sqlite")
     cursor = db.cursor()
-    query = "SELECT content FROM posts"
+    query = "SELECT id, content FROM posts"
     cursor.execute(query)
     posts = cursor.fetchall()
+    # print(posts)
     print("posts fetched")
+
+    # for later querying the post content of a given id
+    df_post = pd.DataFrame(posts, columns=["id", "content"])
+
+    # for topic storing (id, content, topic)
+    df_topic = pd.DataFrame(columns=["content", "topic"])
 
     # NLTK data
     nltk.download("punkt")
@@ -37,9 +44,10 @@ def main():
 
     # BOW: [[post_1_words],[post_2_words],[post_3_words]]
     bow_list = []
+    bow_list_content_id = []  # store the post_id so the original content can be found later
 
     for post in posts:
-        text = post[0]
+        text = post[1]
         # print(text)
         tokens = word_tokenize(text)
 
@@ -58,6 +66,8 @@ def main():
         # if there's at least 1 word left for this post, append to list
         if len(new_tokens) > 0:
             bow_list.append(new_tokens)
+            current_post_id = post[0]
+            bow_list_content_id.append(current_post_id)
 
     # Create dictionary and corpus
     dictionary = Dictionary(bow_list)
@@ -96,12 +106,20 @@ def main():
     # Then, let's determine how many posts we have for each topic
     # Count the dominant topic for each document
     topic_counts = [0] * optimal_k  # one counter per topic
-    for bow in corpus:
-        topic_dist = optimal_lda.get_document_topics(bow)  # list of (topic_id, probability)
+    for i in range(len(corpus)):  # so the index is i
+        topic_dist = optimal_lda.get_document_topics(corpus[i])  # list of (topic_id, probability)
         if not topic_dist:
             continue
         dominant_topic = max(topic_dist, key=lambda x: x[1])[0]  # find the top probability
         topic_counts[dominant_topic] += 1  # add 1 to the most probable topic's counter
+
+        # add this to the data frame to store this topic classification later
+        post_id = bow_list_content_id[i]
+        original_content = df_post[df_post["id"] == post_id]["content"].values[0]
+        # df_topic: (content, topic_id)
+        df_topic.loc[len(df_topic)] = [original_content, dominant_topic]
+
+    df_topic.to_csv("post_topic.csv", index=False, encoding="utf-8")
 
     # Display the topic counts
     topic_count = []
