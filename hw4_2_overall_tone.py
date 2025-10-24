@@ -27,8 +27,8 @@ nltk.download("vader_lexicon")
 # Initialize the VADER sentiment analyser
 sia = SentimentIntensityAnalyzer()
 
-# Calculate sentiment scores for each review
-df["sentiment_score"] = df["content"].apply(lambda review: sia.polarity_scores(review)["compound"])
+# Calculate sentiment scores for each content
+df["sentiment_score"] = df["content"].apply(lambda content: sia.polarity_scores(content)["compound"])
 
 print(df["sentiment_score"].mean())
 print(df["sentiment_score"].median())
