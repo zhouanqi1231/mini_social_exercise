@@ -214,7 +214,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form action="/posts/{{ entry.post.id }}/comment" method="POST">
+          <form action="/posts/{{ entry.post.id }}/repost" method="POST">
             <div class="mb-3">
               <label for="repost-content-{{ entry.post.id }}" class="form-label">Add a repost comment or not</label>
               <textarea class="form-control" id="repost-content-{{ entry.post.id }}" name="content" rows="3"></textarea>

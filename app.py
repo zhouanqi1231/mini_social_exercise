@@ -501,6 +501,30 @@ def add_comment(post_id):
     return redirect(request.referrer or url_for("post_detail", post_id=post_id))
 
 
+@app.route("/posts/<int:post_id>/repost", methods=["POST"])
+def add_repost(post_id):
+    """Handles adding a new repost to a specific post."""
+    user_id = session.get("user_id")
+
+    # Block access if user is not logged in
+    if not user_id:
+        flash("You must be logged in to repost.", "danger")
+        return redirect(url_for("login"))
+
+    # Get content from the submitted form
+    content = request.form.get("content")
+
+    # Basic validation to ensure repost is not empty
+    db = get_db()
+    cursor = db.execute("INSERT INTO posts (user_id, content, is_repost, original_post) VALUES (?, ?, ?, ?)", (user_id, content, 1, post_id))
+    new_post_id = cursor.lastrowid
+    db.commit()
+    flash("Your repost was successfully created!", "success")
+
+    # Redirect back to the page the user came from (likely the post detail page)
+    return redirect(request.referrer or url_for("post_detail", post_id=new_post_id))
+
+
 @app.route("/comments/<int:comment_id>/delete", methods=["POST"])
 def delete_comment(comment_id):
     """Handles deleting a comment."""
