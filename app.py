@@ -194,16 +194,7 @@ def feed():
         original_post = None
         if post["is_repost"] == True:
             original_post_id = post["original_post"]
-            original_post = query_db(
-                """
-                SELECT p.id as id, p.content, p.created_at, u.username, u.id as user_id
-                FROM posts p
-                JOIN users u ON p.user_id = u.id
-                WHERE p.id = ?
-                """,
-                (original_post_id,),
-                one=True,
-            )
+            original_post = get_post_by_id(original_post_id)
 
         posts_data.append({"post": post_dict, "reactions": reactions, "user_reaction": user_reaction, "followed_poster": followed_poster, "comments": comments_moderated, "is_repost": post["is_repost"], "original_post": original_post})
 
@@ -361,16 +352,7 @@ def user_following(username):
 def post_detail(post_id):
     """Displays a single post and its comments, with content moderation applied."""
 
-    post_raw = query_db(
-        """
-        SELECT p.id, p.content, p.created_at, u.username, u.id as user_id, is_repost, original_post
-        FROM posts p
-        JOIN users u ON p.user_id = u.id
-        WHERE p.id = ?
-    """,
-        (post_id,),
-        one=True,
-    )
+    post_raw = get_post_by_id(post_id)
 
     if not post_raw:
         # The abort function will stop the request and show a 404 Not Found page.
@@ -530,6 +512,20 @@ def add_comment(post_id):
 
     # Redirect back to the page the user came from (likely the post detail page)
     return redirect(request.referrer or url_for("post_detail", post_id=post_id))
+
+
+def get_post_by_id(post_id):
+    post = query_db(
+        """
+        SELECT p.id as id, p.content, p.created_at, u.username, u.id as user_id, is_repost, original_post
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = ?
+        """,
+        (post_id,),
+        one=True,
+    )
+    return post
 
 
 @app.route("/posts/<int:post_id>/repost", methods=["POST"])
