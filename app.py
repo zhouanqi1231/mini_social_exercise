@@ -538,12 +538,23 @@ def add_repost(post_id):
         flash("You must be logged in to repost.", "danger")
         return redirect(url_for("login"))
 
-    # Get content from the submitted form
+    # Get content from the submitted form and add the original content if the original one is a repost, too
     content = request.form.get("content")
+
+    # default original_post_id assumes current post is the very original one.
+    original_post_id = post_id
+
+    # get original post, add that one's comment, set the "original_post" as the very original one.
+    original_post = get_post_by_id(post_id)
+    if original_post["is_repost"]:
+        # this is to allow users visit profiles of other users who are on the reposting chain and to mark others' comments
+        # the link is concatenated manually from backend
+        content += " // <a href='/u/{username}'>@{username}</a>: {text}".format(user_id=original_post["user_id"], username=original_post["username"], text=original_post["content"])
+        original_post_id = original_post["original_post"]
 
     # Basic validation to ensure repost is not empty
     db = get_db()
-    cursor = db.execute("INSERT INTO posts (user_id, content, is_repost, original_post) VALUES (?, ?, ?, ?)", (user_id, content, 1, post_id))
+    cursor = db.execute("INSERT INTO posts (user_id, content, is_repost, original_post) VALUES (?, ?, ?, ?)", (user_id, content, 1, original_post_id))
     new_post_id = cursor.lastrowid
     db.commit()
     flash("Your repost was successfully created!", "success")
