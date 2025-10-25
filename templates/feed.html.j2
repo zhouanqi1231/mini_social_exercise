@@ -85,7 +85,19 @@
         {% endif %}
       </div>
 
+      <!-- Post Content -->
       <p class="mt-2">{{ entry.post.content }}</p>
+
+      <!-- Repost Original Post Block -->
+      {% if entry.post.is_repost and entry.original_post %}
+      <div class="card bg-light p-2 mb-2" style="cursor:pointer;"
+        onclick="window.location.href='/posts/{{ entry.original_post.id }}'">
+        <small class="text-muted">
+          <a href="/u/{{ entry.original_post.user_id }}">{{ user_display(entry.original_post.username)}}</a>
+        </small>
+        <p class="mb-0">{{ entry.original_post.content }}</p>
+      </div>
+      {% endif %}
 
       <!-- Reactions Display and Add Reaction Button -->
       <div class="d-flex align-items-center mt-2 mb-2">
