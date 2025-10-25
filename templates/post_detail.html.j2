@@ -24,7 +24,19 @@
         {% endif %}
       </div>
 
+      <!-- Post Content -->
       <p class="card-text mt-2">{{ post.content }}</p>
+
+      <!-- original post -->
+      {% if post.is_repost and original_post %}
+      <div class="card bg-light p-2 mb-1" style="cursor:pointer;"
+        onclick="window.location.href='/posts/{{ original_post.id }}'">
+        <small class="text-muted">
+          <a href="/u/{{ original_post.username }}"> {{ user_display(original_post.username)}}</a>
+        </small>
+        <p class="mb-0">{{ original_post.content }}</p>
+      </div>
+      {% endif %}
 
       <!-- Reactions Display and Add Reaction Button (Copied from feed.html.j2) -->
       <div class="d-flex align-items-center mt-2 mb-2">
@@ -65,10 +77,12 @@
         {% endif %}
 
         {# add this button at the right side of this section #}
+        {% if session.get('user_id') %}
         <button class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal"
           data-bs-target="#addRepostModal-{{ post.id }}">
           Repost
         </button>
+        {% endif %}
       </div>
 
       <hr>

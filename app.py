@@ -347,7 +347,7 @@ def post_detail(post_id):
 
     post_raw = query_db(
         """
-        SELECT p.id, p.content, p.created_at, u.username, u.id as user_id
+        SELECT p.id, p.content, p.created_at, u.username, u.id as user_id, is_repost, original_post
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = ?
@@ -366,6 +366,21 @@ def post_detail(post_id):
     # Unpack the tuple from moderate_content, we only need the moderated content string here
     moderated_post_content, _ = moderate_content(post["content"])
     post["content"] = moderated_post_content
+
+    # if repost, return the original post, too
+    original_post = None
+    if post["is_repost"] == True:
+        original_post_id = post["original_post"]
+        original_post = query_db(
+            """
+            SELECT p.id as id, p.content, p.created_at, u.username, u.id as user_id
+            FROM posts p
+            JOIN users u ON p.user_id = u.id
+            WHERE p.id = ?
+            """,
+            (original_post_id,),
+            one=True,
+        )
 
     #  Fetch Reactions (No moderation needed)
     reactions = query_db(
@@ -391,7 +406,7 @@ def post_detail(post_id):
         comments.append(comment)
 
     # Pass the moderated data to the template
-    return render_template("post_detail.html.j2", post=post, reactions=reactions, comments=comments, reaction_emojis=REACTION_EMOJIS, reaction_types=REACTION_TYPES)
+    return render_template("post_detail.html.j2", post=post, reactions=reactions, comments=comments, reaction_emojis=REACTION_EMOJIS, reaction_types=REACTION_TYPES, original_post=original_post)
 
 
 @app.route("/about")
