@@ -190,13 +190,16 @@ def feed():
             comment_dict["content"], _ = moderate_content(comment_dict["content"])
             comments_moderated.append(comment_dict)
 
+        # newest reposts first
+        reposts = query_db("SELECT p.id, p.content, p.created_at, u.username, u.id as user_id FROM posts p JOIN users u ON p.user_id = u.id WHERE p.original_post = ? ORDER BY p.created_at DESC", (post["id"],))
+
         # original post
         original_post = None
         if post["is_repost"] == True:
             original_post_id = post["original_post"]
             original_post = get_post_by_id(original_post_id)
 
-        posts_data.append({"post": post_dict, "reactions": reactions, "user_reaction": user_reaction, "followed_poster": followed_poster, "comments": comments_moderated, "is_repost": post["is_repost"], "original_post": original_post})
+        posts_data.append({"post": post_dict, "reactions": reactions, "user_reaction": user_reaction, "followed_poster": followed_poster, "comments": comments_moderated, "is_repost": post["is_repost"], "original_post": original_post, "reposts": reposts})
 
     #  4. Render Template with Pagination Info
     return render_template("feed.html.j2", posts=posts_data, current_sort=sort, current_show=show, page=page, per_page=POSTS_PER_PAGE, reaction_emojis=REACTION_EMOJIS, reaction_types=REACTION_TYPES)  # Pass current page number  # Pass items per page
@@ -403,8 +406,10 @@ def post_detail(post_id):
         comment["content"] = moderated_comment_content
         comments.append(comment)
 
+    reposts = query_db("SELECT p.id, p.content, p.created_at, u.username, u.id as user_id FROM posts p JOIN users u ON p.user_id = u.id WHERE p.original_post = ? ORDER BY p.created_at ASC", (post_id,))
+
     # Pass the moderated data to the template
-    return render_template("post_detail.html.j2", post=post, reactions=reactions, comments=comments, reaction_emojis=REACTION_EMOJIS, reaction_types=REACTION_TYPES, original_post=original_post)
+    return render_template("post_detail.html.j2", post=post, reactions=reactions, comments=comments, reaction_emojis=REACTION_EMOJIS, reaction_types=REACTION_TYPES, original_post=original_post, reposts=reposts)
 
 
 @app.route("/about")
