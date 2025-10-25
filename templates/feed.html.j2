@@ -6,6 +6,7 @@
   <img src="{{ url_for('static', filename='icon.png') }}" alt="Logo" style="height: 64px;" class="mb-4">
 </div>
 
+{# input edit for user #}
 {% if session.get('user_id') %}
 <div class="col-md-8 mx-auto mb-4">
   <div class="card shadow-sm">
@@ -133,6 +134,12 @@
           </ul>
         </div>
         {% endif %}
+
+        {# add this button at the right side of this section #}
+        <button class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal"
+          data-bs-target="#addRepostModal-{{ entry.post.id }}">
+          Repost
+        </button>
       </div>
 
 
@@ -192,6 +199,27 @@
                 required></textarea>
             </div>
             <button type="submit" class="btn btn-primary">Submit Comment</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addRepostModal-{{ entry.post.id }}" tabindex="-1"
+    aria-labelledby="addRepostModalLabel-{{ entry.post.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addRepostModalLabel-{{ entry.post.id }}">Repost</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form action="/posts/{{ entry.post.id }}/comment" method="POST">
+            <div class="mb-3">
+              <label for="repost-content-{{ entry.post.id }}" class="form-label">Add a repost comment or not</label>
+              <textarea class="form-control" id="repost-content-{{ entry.post.id }}" name="content" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Repost</button>
           </form>
         </div>
       </div>

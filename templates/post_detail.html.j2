@@ -63,6 +63,12 @@
           </ul>
         </div>
         {% endif %}
+
+        {# add this button at the right side of this section #}
+        <button class="btn btn-primary btn-sm ms-auto" data-bs-toggle="modal"
+          data-bs-target="#addRepostModal-{{ post.id }}">
+          Repost
+        </button>
       </div>
 
       <hr>
@@ -121,6 +127,27 @@
               required></textarea>
           </div>
           <button type="submit" class="btn btn-primary">Submit Comment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addRepostModal-{{ post.id }}" tabindex="-1"
+  aria-labelledby="addRepostModalLabel-{{ post.id }}" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addRepostModalLabel-{{ post.id }}">Repost</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="/posts/{{ post.id }}/comment" method="POST">
+          <div class="mb-3">
+            <label for="repost-content-{{ post.id }}" class="form-label">Add a repost comment or not</label>
+            <textarea class="form-control" id="repost-content-{{ post.id }}" name="content" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Repost</button>
         </form>
       </div>
     </div>
